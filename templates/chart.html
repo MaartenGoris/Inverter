@@ -1,0 +1,137 @@
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">	
+	<title>Matrix</title>
+	
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.js"></script>	
+	<script src="https://www.chartjs.org/samples/latest/utils.js"></script>
+
+	
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
+
+</head>
+
+<body style="background-color: rgba(255, 255, 255, 0.8);">
+	<div>
+		<a href="/"><b>Home</b></a> 
+	</div>
+	<div>
+		<input class="command ui-button ui-widget ui-corner-all" value="Sample type 1" style="color: grey;" key="request" data="1" identifier= "Buffer">
+		<input class="command ui-button ui-widget ui-corner-all" value="Sample type 2" style="color: grey;" key="request" data="2" identifier= "Buffer">
+		<input class="command ui-button ui-widget ui-corner-all" value="Sample type 3" style="color: grey;" key="request" data="3" identifier= "Buffer">
+
+		<input class="command ui-button ui-widget ui-corner-all" value="Continue" style="color: grey;" key="mode" data="continue" identifier= "Device">
+		<input class="command ui-button ui-widget ui-corner-all" value="Request" style="color: grey;" key="mode" data="request" identifier= "Device">
+
+		<input class="command ui-button ui-widget ui-corner-all" value="Disable" style="color: grey;" key="mode" data="disabled" identifier= "Device-fsm">
+		<input class="command ui-button ui-widget ui-corner-all" value="Enable" style="color: grey;" key="mode" data="enabled" identifier= "Device-fsm">
+
+	</div>
+	<div class="content">
+		<p id='RawData'></p>
+		<div class="wrapper" style="margin-left:10%; margin-right:10%; padding:20px;">
+			<canvas id="chart-0"></canvas>
+		</div>
+	</div>
+	<script>
+		
+		var options = {
+			aspectRatio: 1.8,
+			responsive: true,
+			maintainAspectRatio: true,
+
+			elements: {
+				point: {
+					radius: function(context) {
+						var value = context.dataset.data[context.dataIndex];
+						var size = context.chart.width;
+						var base = Math.abs(value.v) / 300;
+						return (size / 24) * base;
+					},
+					pointBorderWidth: function(context) {
+						var value = context.dataset.data[context.dataIndex];
+						if (value.p == false) { 
+							return undefined;
+						}
+						else{
+							return 5;
+						}
+					}
+				}
+			},
+			
+			scales: {
+				yAxes: [{
+					display: true,
+					ticks: {
+						min: -50,
+                        max: 300
+                    },
+					scaleLabel: {
+						display: true,
+						labelString: 'Y-as'
+					}
+				}],
+				xAxes: [{
+					display: true,
+					ticks: {
+						min: -50,
+                        max: 600
+                    },
+					scaleLabel: {
+						display: true,
+						labelString: 'X-as'
+					}
+				}]
+    		},
+			plugins: {
+				datalabels: {
+					display: function(context) {
+						var value = context.dataset.data[context.dataIndex];
+						return value.p == true;
+					}
+				}
+			}
+		};
+		
+		jQuery("input.command").click(function(e){
+			jQuery.ajax({
+			type: "post",
+				url: "/interact/" + jQuery(this).attr('identifier'),
+				data: { 
+					key: jQuery(this).attr('key'),
+					data: jQuery(this).attr('data')
+				},
+				success: function(result) {},
+				error: function(){alert("Error");}
+			});
+		});
+
+		function getData() {
+			jQuery.get("/chartData", function(data, status){			
+				var tmp= Object.values(data)
+				chart.data.datasets= tmp;
+				chart.update(0);
+			});  
+		};
+
+		var chart = new Chart('chart-0', {
+			type: 'bubble',
+			plugins: [ChartDataLabels],
+			options: options
+		});
+
+		setInterval(getData, 500)
+
+	</script>
+</body>
